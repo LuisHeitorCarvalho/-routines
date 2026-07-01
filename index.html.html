@@ -1,0 +1,947 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Routine</title>
+<style>
+  :root {
+    --cream: #f1e8d6;
+    --cream-deep: #e8dcc4;
+    --paper: #faf4e8;
+    --ink: #1c1a16;
+    --ink-soft: #4a4338;
+    --ink-muted: rgba(28, 26, 22, 0.58);
+    --terracotta: #a8432d;
+    --terracotta-deep: #7d2f1f;
+    --terracotta-soft: rgba(168, 67, 45, 0.10);
+    --gold: #b8923f;
+    --gold-soft: #d4b878;
+    --gold-wash: rgba(184, 146, 63, 0.16);
+    --blue-quiet: #3e5768;
+    --blue-wash: rgba(62, 87, 104, 0.12);
+    --line: rgba(28, 26, 22, 0.12);
+    --line-strong: rgba(28, 26, 22, 0.34);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(circle at 18% 8%, rgba(184, 146, 63, 0.10), transparent 36%),
+      radial-gradient(circle at 90% 78%, rgba(168, 67, 45, 0.08), transparent 34%),
+      linear-gradient(135deg, var(--cream), var(--cream-deep));
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+
+  .mono,
+  .top-line,
+  .task-time,
+  .task-state,
+  .period-time {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  }
+
+
+
+  .shell {
+    width: min(1180px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 22px 0 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  header {
+    border-top: 3px double var(--ink);
+    border-bottom: 1px solid var(--line);
+    padding: 14px 0 16px;
+    margin-bottom: 18px;
+  }
+
+  .top-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .top-line .top-clock {
+    color: var(--terracotta);
+    font-weight: 800;
+  }
+
+  h1 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-weight: 400;
+    font-size: clamp(34px, 5vw, 56px);
+    line-height: 1;
+    letter-spacing: -0.035em;
+  }
+
+
+  .now-panel {
+    margin: 22px 0 18px;
+    background: var(--ink);
+    color: var(--cream);
+    border: 1px solid rgba(28, 26, 22, 0.7);
+    padding: 22px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 18px 42px -28px rgba(28, 26, 22, 0.75);
+  }
+
+
+  .now-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(230px, 0.85fr);
+    gap: 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 10px;
+    font-size: 10px;
+    letter-spacing: 0.20em;
+    text-transform: uppercase;
+    color: var(--gold-soft);
+    font-weight: 800;
+  }
+
+
+
+  .current-title {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(29px, 4.8vw, 52px);
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+    font-weight: 400;
+    max-width: 760px;
+  }
+
+  .current-title em {
+    font-style: italic;
+    color: var(--gold-soft);
+    font-weight: 300;
+  }
+
+  .current-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 15px;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 5px 10px;
+    border: 1px solid rgba(241, 232, 214, 0.22);
+    background: rgba(250, 244, 232, 0.06);
+    color: rgba(241, 232, 214, 0.88);
+    font-size: 10px;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .activity-meter {
+    margin-top: 18px;
+    max-width: 540px;
+  }
+
+  .activity-meter-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+    color: rgba(241, 232, 214, 0.66);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .activity-track {
+    height: 6px;
+    background: rgba(241, 232, 214, 0.12);
+    overflow: hidden;
+  }
+
+  .activity-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--gold-soft), var(--terracotta));
+    transition: width 600ms ease;
+  }
+
+  .next-box {
+    align-self: stretch;
+    background: rgba(250, 244, 232, 0.08);
+    border: 1px solid rgba(241, 232, 214, 0.16);
+    padding: 17px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 158px;
+  }
+
+
+  .next-label {
+    color: var(--gold-soft);
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 800;
+  }
+
+  .next-title {
+    margin-top: 11px;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 23px;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+
+  .next-time {
+    margin-top: 14px;
+    color: rgba(241, 232, 214, 0.72);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .progress-card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    padding: 18px;
+    margin-bottom: 24px;
+  }
+
+  .progress-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 12px;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .progress-head strong {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 21px;
+    color: var(--terracotta);
+    letter-spacing: normal;
+    text-transform: none;
+    font-weight: 400;
+    font-style: italic;
+  }
+
+  .progress-track {
+    height: 8px;
+    background: rgba(28, 26, 22, 0.12);
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--terracotta), var(--gold));
+    transition: width 600ms ease;
+  }
+
+  .progress-foot {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--ink-muted);
+  }
+
+  .main-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+    align-items: start;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 15px;
+    margin: 30px 0 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line-strong);
+  }
+
+  .section-head:first-child { margin-top: 0; }
+
+  .section-head h2 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 30px;
+    font-weight: 400;
+    letter-spacing: -0.025em;
+  }
+
+  .period {
+    margin-bottom: 30px;
+    transition: opacity 240ms ease;
+  }
+
+  .period.period-done { opacity: 0.66; }
+  .period.period-active { opacity: 1; }
+
+  .period-summary {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 14px;
+    align-items: center;
+    padding: 12px 0 16px;
+    cursor: pointer;
+  }
+
+  .period-badge {
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--line-strong);
+    background: var(--paper);
+    display: grid;
+    place-items: center;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 23px;
+    font-style: italic;
+    color: var(--terracotta);
+  }
+
+  .period-name {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 28px;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .period-time {
+    justify-self: end;
+    background: var(--cream-deep);
+    color: var(--terracotta-deep);
+    padding: 7px 12px;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .cards { display: grid; gap: 12px; }
+  .period.collapsed .cards { display: none; }
+
+  .task-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 116px minmax(0, 1fr) auto;
+    gap: 18px;
+    align-items: center;
+    padding: 18px 18px 18px 20px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    overflow: hidden;
+    transition: transform 240ms ease, box-shadow 240ms ease, border-color 240ms ease, background 240ms ease, opacity 240ms ease;
+  }
+
+  .task-card:hover {
+    transform: translateX(4px);
+    border-color: var(--line-strong);
+    box-shadow: -4px 4px 0 var(--ink);
+  }
+
+  .task-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: transparent;
+    transition: background 240ms ease;
+  }
+
+  .task-card.done {
+    opacity: 0.42;
+    background: rgba(250, 244, 232, 0.42);
+    filter: saturate(0.75);
+  }
+
+  .task-card.done .task-name {
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+    text-decoration-color: rgba(28, 26, 22, 0.32);
+  }
+
+  .task-card.current {
+    border-color: var(--terracotta);
+    background: linear-gradient(90deg, var(--terracotta-soft), var(--paper));
+    box-shadow: -5px 5px 0 var(--terracotta), 0 16px 38px -34px rgba(28, 26, 22, 0.9);
+    opacity: 1;
+  }
+
+  .task-card.current::before { background: var(--terracotta); width: 6px; }
+
+  .task-card.next {
+    border-color: rgba(184, 146, 63, 0.78);
+    background: linear-gradient(90deg, var(--gold-wash), var(--paper));
+    box-shadow: -3px 3px 0 rgba(184, 146, 63, 0.55);
+  }
+
+  .task-card.next::before { background: var(--gold); }
+  .task-card.future { opacity: 1; }
+
+  .task-card.phone {
+    background:
+      linear-gradient(90deg, var(--blue-wash), transparent 42%),
+      var(--paper);
+  }
+
+  .task-card.transition-card {
+    margin-bottom: 16px;
+    display: none;
+    border-color: var(--terracotta);
+    background: linear-gradient(90deg, var(--terracotta-soft), var(--paper));
+    box-shadow: -5px 5px 0 var(--terracotta);
+  }
+
+  .task-card.transition-card.show { display: grid; }
+
+  .task-time {
+    font-weight: 800;
+    color: var(--terracotta-deep);
+    background: var(--cream-deep);
+    padding: 7px 10px;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .task-name {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 21px;
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    font-weight: 400;
+  }
+
+  .task-note {
+    margin-top: 5px;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  .task-state {
+    justify-self: end;
+    min-width: 86px;
+    text-align: center;
+    padding: 7px 9px;
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    background: rgba(241, 232, 214, 0.45);
+    font-weight: 800;
+  }
+
+  .task-card.current .task-state { background: var(--terracotta); border-color: var(--terracotta); color: var(--cream); }
+  .task-card.next .task-state { background: var(--gold); border-color: var(--gold); color: var(--ink); }
+  .task-card.phone.current .task-state { background: var(--blue-quiet); border-color: var(--blue-quiet); color: var(--cream); }
+
+  @media (max-width: 980px) {
+    .now-grid,
+    .main-layout { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 680px) {
+
+    .shell {
+      width: min(100% - 24px, 1180px);
+      padding-top: 18px;
+    }
+
+    header { padding-top: 18px; margin-bottom: 16px; }
+    .top-line { font-size: 10px; gap: 8px; }
+    h1 { font-size: clamp(32px, 12vw, 48px); }
+
+    .now-panel {
+      padding: 16px;
+      margin-top: 16px;
+    }
+
+    .current-title { font-size: clamp(28px, 10vw, 40px); }
+    .next-box { min-height: auto; padding: 14px; }
+    .next-title { font-size: 21px; }
+    .activity-meter { margin-top: 14px; }
+    .progress-card { padding: 16px; }
+
+
+    .task-card {
+      grid-template-columns: 1fr auto;
+      gap: 10px 12px;
+      padding: 14px;
+    }
+
+    .task-time { grid-column: 1 / -1; justify-self: start; }
+    .task-state { min-width: 76px; }
+    .task-name { font-size: 19px; align-items: flex-start; }
+
+
+    .period-summary { grid-template-columns: auto 1fr; }
+    .period-time { grid-column: 1 / -1; justify-self: start; }
+    .section-head { align-items: flex-start; gap: 10px; margin-top: 30px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <div class="top-line">
+      <span class="top-clock" id="clock">--:--:--</span>
+      <span id="dateLine">—</span>
+    </div>
+    <h1>Routine</h1>
+  </header>
+
+  <section class="now-panel" id="nowPanel" aria-live="polite">
+    <div class="now-grid">
+      <div>
+        <div class="eyebrow mono" id="stateLabel">Now</div>
+        <div class="current-title" id="currentTitle">Loading current activity…</div>
+        <div class="current-meta">
+          <span class="pill mono" id="currentTime">--:--</span>
+          <span class="pill mono" id="currentPeriod">Period</span>
+          <span class="pill mono" id="remainingTime">--</span>
+        </div>
+        <div class="activity-meter">
+          <div class="activity-meter-head mono">
+            <span>Current block progress</span>
+            <span id="activityPercent">0%</span>
+          </div>
+          <div class="activity-track"><div class="activity-fill" id="activityFill"></div></div>
+        </div>
+      </div>
+
+      <div class="next-box">
+        <div>
+          <div class="next-label mono">Next</div>
+          <div class="next-title" id="nextTitle">Loading next activity…</div>
+        </div>
+        <div class="next-time mono" id="nextTime">--:--</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="progress-card">
+    <div class="progress-head mono">
+      <span>Routine progress</span>
+      <strong id="progressPercent">0%</strong>
+    </div>
+    <div class="progress-track" aria-label="Routine progress">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="progress-foot mono">
+      <span>Start · 04:30</span>
+      <span id="progressStatus">Routine not started</span>
+      <span>Sleep · 20:45</span>
+    </div>
+  </section>
+
+
+  <main class="main-layout">
+    <div>
+      <section class="section-head">
+        <h2>Blocks of the day</h2>
+      </section>
+
+      <article id="transitionCard" class="task-card transition-card current">
+        <div class="task-time mono" id="transitionTime">Transition</div>
+        <div>
+          <h3 class="task-name" id="transitionTitle">Prepare for next block</h3>
+          <p class="task-note" id="transitionNote">No explicit activity in this interval.</p>
+        </div>
+        <div class="task-state mono">Now</div>
+      </article>
+
+      <section class="period" data-period="Morning" data-start="04:30" data-end="12:15">
+        <div class="period-summary" role="button" tabindex="0" aria-label="Toggle Morning">
+          <div class="period-badge">M</div>
+          <div>
+            <h3 class="period-name">Morning</h3>
+          </div>
+          <div class="period-time mono">04:30 — 12:15</div>
+        </div>
+        <div class="cards" id="morningCards"></div>
+      </section>
+
+      <section class="period" data-period="Afternoon" data-start="12:15" data-end="18:00">
+        <div class="period-summary" role="button" tabindex="0" aria-label="Toggle Afternoon">
+          <div class="period-badge">A</div>
+          <div>
+            <h3 class="period-name">Afternoon</h3>
+          </div>
+          <div class="period-time mono">12:15 — 18:00</div>
+        </div>
+        <div class="cards" id="afternoonCards"></div>
+      </section>
+
+      <section class="period" data-period="Night" data-start="18:05" data-end="24:00">
+        <div class="period-summary" role="button" tabindex="0" aria-label="Toggle Night">
+          <div class="period-badge">N</div>
+          <div>
+            <h3 class="period-name">Night</h3>
+          </div>
+          <div class="period-time mono">18:05 — 20:45+</div>
+        </div>
+        <div class="cards" id="nightCards"></div>
+      </section>
+    </div>
+
+  </main>
+
+</div>
+
+
+<script>
+  const routine = [
+    { start: "04:30", end: "04:50", title: "Wake up, brush teeth, and tidy room", period: "Morning" },
+    { start: "05:00", end: "06:00", title: "Workout", period: "Morning" },
+    { start: "06:00", end: "06:30", title: "Shower and coffee", period: "Morning" },
+    { start: "06:30", end: "07:20", title: "Deep study", period: "Morning" },
+    { start: "07:30", end: "12:15", title: "School", period: "Morning" },
+    { start: "12:15", end: "12:45", title: "Lunch", period: "Afternoon" },
+    { start: "12:45", end: "13:00", title: "Rest (phone)", period: "Afternoon", phone: true },
+    { start: "13:00", end: "13:25", title: "House chores", period: "Afternoon" },
+    { start: "13:30", end: "18:00", title: "Work", period: "Afternoon" },
+    { start: "18:05", end: "18:20", title: "Phone", period: "Night", phone: true },
+    { start: "18:20", end: "18:30", title: "Meal", period: "Night" },
+    { start: "18:30", end: "19:45", title: "Main study", period: "Night" },
+    { start: "19:45", end: "19:50", title: "Preparation for the next day", period: "Night" },
+    { start: "19:50", end: "20:00", title: "Daily review", period: "Night" },
+    { start: "20:00", end: "20:45", title: "Reading", period: "Night" },
+    { start: "20:45", end: "24:00", title: "Sleep", period: "Night", sleep: true }
+  ];
+
+  const periodTargets = {
+    Morning: document.getElementById("morningCards"),
+    Afternoon: document.getElementById("afternoonCards"),
+    Night: document.getElementById("nightCards")
+  };
+
+  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+  function pad(value) { return String(value).padStart(2, "0"); }
+
+  function timeToMinutes(time) {
+    const parts = time.split(":").map(Number);
+    return parts[0] * 60 + parts[1];
+  }
+
+  function minutesToText(total) {
+    if (total <= 0) return "now";
+    const hours = Math.floor(total / 60);
+    const minutes = total % 60;
+    if (hours && minutes) return hours + "h " + minutes + "min";
+    if (hours) return hours + "h";
+    return minutes + "min";
+  }
+
+  function formatRange(item) {
+    if (item.sleep) return "20:45+";
+    return item.start + " — " + item.end;
+  }
+
+  function getPeriodByMinutes(minutes) {
+    if (minutes >= timeToMinutes("04:30") && minutes < timeToMinutes("12:15")) return "Morning";
+    if (minutes >= timeToMinutes("12:15") && minutes < timeToMinutes("18:00")) return "Afternoon";
+    if (minutes >= timeToMinutes("18:05")) return "Night";
+    return "Transition";
+  }
+
+  function buildCards() {
+    routine.forEach((item, index) => {
+      const card = document.createElement("article");
+      card.className = "task-card future" + (item.phone ? " phone" : "");
+      card.dataset.index = index;
+      card.dataset.start = item.start;
+      card.dataset.end = item.end;
+      card.dataset.period = item.period;
+      card.id = "task-" + index;
+
+      card.innerHTML =
+        '<div class="task-time">' + formatRange(item) + '</div>' +
+        '<div>' +
+          '<h3 class="task-name">' + item.title + '</h3>' +
+        '</div>' +
+        '<div class="task-state">Future</div>';
+
+      periodTargets[item.period].appendChild(card);
+    });
+  }
+
+  function findCurrentAndNext(minutes) {
+    const routineStart = timeToMinutes("04:30");
+    const sleepStart = timeToMinutes("20:45");
+
+    if (minutes < routineStart) {
+      return { mode: "before", current: null, currentIndex: null, next: routine[0], nextIndex: 0, transitionStart: 0 };
+    }
+
+    for (let i = 0; i < routine.length; i++) {
+      const item = routine[i];
+      const start = timeToMinutes(item.start);
+      const end = item.end === "24:00" ? 1440 : timeToMinutes(item.end);
+
+      if (minutes >= start && minutes < end) {
+        return {
+          mode: item.sleep ? "sleep" : "active",
+          current: item,
+          currentIndex: i,
+          next: routine[i + 1] || routine[0],
+          nextIndex: i + 1 < routine.length ? i + 1 : 0,
+          transitionStart: null
+        };
+      }
+
+      if (minutes < start) {
+        const previous = routine[i - 1] || null;
+        const previousEnd = previous ? (previous.end === "24:00" ? 1440 : timeToMinutes(previous.end)) : routineStart;
+        return { mode: "transition", current: null, currentIndex: null, next: item, nextIndex: i, transitionStart: previousEnd };
+      }
+    }
+
+    if (minutes >= sleepStart) {
+      return { mode: "sleep", current: routine[routine.length - 1], currentIndex: routine.length - 1, next: routine[0], nextIndex: 0, transitionStart: null };
+    }
+
+    return { mode: "transition", current: null, currentIndex: null, next: routine[0], nextIndex: 0, transitionStart: 0 };
+  }
+
+  function updateClock(now) {
+    const fullTime = pad(now.getHours()) + ":" + pad(now.getMinutes()) + ":" + pad(now.getSeconds());
+    document.getElementById("clock").textContent = fullTime;
+    document.getElementById("dateLine").textContent = weekdays[now.getDay()] + ", " + months[now.getMonth()] + " " + now.getDate() + ", " + now.getFullYear();
+  }
+
+  function updateProgress(minutes) {
+    const start = timeToMinutes("04:30");
+    const end = timeToMinutes("20:45");
+    let pct = 0;
+
+    if (minutes >= start && minutes <= end) pct = ((minutes - start) / (end - start)) * 100;
+    else if (minutes > end) pct = 100;
+
+    pct = Math.max(0, Math.min(100, pct));
+    document.getElementById("progressFill").style.width = pct + "%";
+    document.getElementById("progressPercent").textContent = Math.round(pct) + "%";
+
+    let status = "Routine not started";
+    if (minutes >= start && minutes < end) status = "Routine in progress";
+    if (minutes >= end) status = "Routine complete · Sleep";
+    document.getElementById("progressStatus").textContent = status;
+  }
+
+  function activityProgress(item, minutes) {
+    if (!item || item.sleep) return item && item.sleep ? 100 : 0;
+    const start = timeToMinutes(item.start);
+    const end = item.end === "24:00" ? 1440 : timeToMinutes(item.end);
+    return Math.max(0, Math.min(100, ((minutes - start) / (end - start)) * 100));
+  }
+
+  function updateActivityMeter(status, minutes) {
+    let pct = 0;
+    if (status.mode === "active" || status.mode === "sleep") pct = activityProgress(status.current, minutes);
+    if (status.mode === "transition" && status.next) {
+      const end = timeToMinutes(status.next.start);
+      const start = status.transitionStart || Math.max(0, end - 10);
+      pct = Math.max(0, Math.min(100, ((minutes - start) / (end - start)) * 100));
+    }
+
+    document.getElementById("activityFill").style.width = pct + "%";
+    document.getElementById("activityPercent").textContent = Math.round(pct) + "%";
+  }
+
+  function updateCards(status, minutes) {
+    const cards = document.querySelectorAll(".task-card:not(.transition-card)");
+
+    cards.forEach(card => {
+      const index = Number(card.dataset.index);
+      const item = routine[index];
+      const end = item.end === "24:00" ? 1440 : timeToMinutes(item.end);
+      const state = card.querySelector(".task-state");
+      card.classList.remove("done", "current", "next", "future");
+
+      if (status.currentIndex === index) {
+        card.classList.add("current");
+        state.textContent = item.phone ? "Phone" : item.sleep ? "Sleep" : "Now";
+      } else if (status.nextIndex === index) {
+        card.classList.add("next");
+        state.textContent = "Next";
+      } else if (minutes >= end) {
+        card.classList.add("done");
+        state.textContent = "Done";
+      } else {
+        card.classList.add("future");
+        state.textContent = "Future";
+      }
+    });
+  }
+
+  function updateTransitionCard(status, minutes) {
+    const card = document.getElementById("transitionCard");
+    if (status.mode !== "transition") {
+      card.classList.remove("show");
+      return;
+    }
+
+    const nextStart = timeToMinutes(status.next.start);
+    const wait = nextStart - minutes;
+    const start = status.transitionStart || Math.max(0, nextStart - 10);
+    const pct = Math.max(0, Math.min(100, ((minutes - start) / (nextStart - start)) * 100));
+
+    card.classList.add("show");
+    document.getElementById("transitionTime").textContent = "Transition";
+    document.getElementById("transitionTitle").textContent = "Prepare for " + status.next.title;
+    document.getElementById("transitionNote").textContent = "Next starts in " + minutesToText(wait) + " · " + formatRange(status.next);
+  }
+
+  function updatePeriodMarkers(minutes, status) {
+    const activePeriod = status.mode === "active" || status.mode === "sleep" ? status.current.period : getPeriodByMinutes(minutes);
+    document.getElementById("currentPeriod").textContent = activePeriod;
+
+
+    document.querySelectorAll(".period").forEach(period => {
+      const name = period.dataset.period;
+      const start = timeToMinutes(period.dataset.start);
+      const end = period.dataset.end === "24:00" ? 1440 : timeToMinutes(period.dataset.end);
+      period.classList.toggle("period-active", name === activePeriod);
+      period.classList.toggle("period-done", minutes >= end && name !== activePeriod);
+      if (!period.dataset.userCollapsed) period.classList.remove("collapsed");
+    });
+  }
+
+  function updateNow(status, minutes) {
+    const currentTitle = document.getElementById("currentTitle");
+    const currentTime = document.getElementById("currentTime");
+    const remainingTime = document.getElementById("remainingTime");
+    const nextTitle = document.getElementById("nextTitle");
+    const nextTime = document.getElementById("nextTime");
+    const stateLabel = document.getElementById("stateLabel");
+
+    if (status.mode === "before") {
+      const wait = timeToMinutes(status.next.start) - minutes;
+      stateLabel.textContent = "Before start";
+      currentTitle.innerHTML = 'Routine has not <em>started</em> yet';
+      currentTime.textContent = "Starts 04:30";
+      remainingTime.textContent = "Starts in " + minutesToText(wait);
+      nextTitle.textContent = status.next.title;
+      nextTime.textContent = formatRange(status.next);
+      return;
+    }
+
+    if (status.mode === "transition") {
+      const wait = timeToMinutes(status.next.start) - minutes;
+      stateLabel.textContent = "Transition";
+      currentTitle.innerHTML = 'Transition · prepare for <em>' + status.next.title + '</em>';
+      currentTime.textContent = "No explicit block";
+      remainingTime.textContent = "Next in " + minutesToText(wait);
+      nextTitle.textContent = status.next.title;
+      nextTime.textContent = formatRange(status.next);
+      return;
+    }
+
+    if (status.mode === "sleep") {
+      stateLabel.textContent = "Now";
+      currentTitle.innerHTML = '<em>Sleep</em>';
+      currentTime.textContent = "20:45+";
+      remainingTime.textContent = "Routine complete";
+      nextTitle.textContent = "Wake up, brush teeth, and tidy room";
+      nextTime.textContent = "Tomorrow · 04:30 — 04:50";
+      return;
+    }
+
+    const current = status.current;
+    const end = current.end === "24:00" ? 1440 : timeToMinutes(current.end);
+    stateLabel.textContent = current.phone ? "Phone window" : "Now";
+    currentTitle.innerHTML = current.title.replace(/\((phone)\)/i, '<em>($1)</em>');
+    currentTime.textContent = formatRange(current);
+    remainingTime.textContent = minutesToText(end - minutes) + " left";
+
+    if (status.next) {
+      nextTitle.textContent = status.next.title;
+      nextTime.textContent = formatRange(status.next);
+    } else {
+      nextTitle.textContent = "Routine complete";
+      nextTime.textContent = "20:45+";
+    }
+  }
+
+  function setupInteractions() {
+    document.querySelectorAll(".period-summary").forEach(summary => {
+      function toggle() {
+        const period = summary.closest(".period");
+        period.classList.toggle("collapsed");
+        if (period.classList.contains("collapsed")) period.dataset.userCollapsed = "1";
+        else delete period.dataset.userCollapsed;
+      }
+      summary.addEventListener("click", toggle);
+      summary.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          toggle();
+        }
+      });
+    });
+  }
+
+  function tick() {
+    const now = new Date();
+    const minutes = now.getHours() * 60 + now.getMinutes();
+    updateClock(now);
+    const status = findCurrentAndNext(minutes);
+    updateNow(status, minutes);
+    updateProgress(minutes);
+    updateActivityMeter(status, minutes);
+    updateCards(status, minutes);
+    updateTransitionCard(status, minutes);
+    updatePeriodMarkers(minutes, status);
+  }
+
+  buildCards();
+  setupInteractions();
+  tick();
+  setInterval(tick, 1000);
+</script>
+</body>
+</html>
+
+
