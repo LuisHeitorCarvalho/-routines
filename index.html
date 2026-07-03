@@ -189,26 +189,42 @@
   body.focus-mode .focus-toggle {
     width: 34px;
     height: 34px;
-    display: grid;
-    place-items: center;
+    position: relative;
+    display: block;
     padding: 0;
+    overflow: hidden;
     border-color: rgba(207, 203, 188, 0.72);
     background: rgba(255, 255, 255, 0.62);
     color: var(--yellow-ink);
-    font-family: var(--font-display);
     font-size: 0;
     letter-spacing: 0;
-    line-height: 1;
+    line-height: 0;
+    text-indent: -9999px;
     opacity: 0.42;
     backdrop-filter: blur(6px);
   }
 
   body.focus-mode .focus-toggle::before {
-    content: "✦";
+    content: "";
+    width: 15px;
+    height: 15px;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
     display: block;
-    font-size: 17px;
-    line-height: 1;
-    transform: translateY(-0.5px);
+    background: currentColor;
+    clip-path: polygon(
+      50% 0%,
+      60% 38%,
+      100% 50%,
+      60% 62%,
+      50% 100%,
+      40% 62%,
+      0% 50%,
+      40% 38%
+    );
+    pointer-events: none;
   }
 
   body.focus-mode .focus-toggle:hover,
