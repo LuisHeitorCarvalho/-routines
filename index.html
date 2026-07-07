@@ -971,7 +971,7 @@
     { start: "18:05", end: "18:20", title: "Phone", period: "Evening", phone: true },
     { start: "18:20", end: "18:30", title: "Meal", period: "Evening", mealId: 5 },
     { start: "18:30", end: "19:45", title: "Main study", period: "Evening" },
-    { start: "19:45", end: "19:50", title: "Prepare for tomorrow", period: "Evening" },
+    { start: "19:45", end: "19:50", title: "Prepare for tomorrow", period: "Evening", prep: true },
     { start: "19:50", end: "20:00", title: "Daily review", period: "Evening" },
     { start: "20:00", end: "20:45", title: "Reading", period: "Evening" },
     { start: "20:45", end: "24:00", title: "Sleep", period: "Evening", sleep: true }
@@ -1141,21 +1141,37 @@
     html += '<div class="detail-group"><strong>' + escapeHTML(weekly.name) + ' — ' + escapeHTML(weekly.title) + '</strong>' +
       renderIngredientList(weekly.tasks.map((t) => [t]), true) + '</div>';
 
-    html += '<div class="detail-group detail-group-muted"><strong>Monthly / As needed</strong>' +
-      renderIngredientList(CHORES_OCCASIONAL.map((t) => [t]), true) + '</div>';
+    // Monthly / As-needed chores only need to surface once a month, not on every
+    // daily open of this detail — shown on the 1st, otherwise skipped.
+    if (new Date().getDate() === 1) {
+      html += '<div class="detail-group detail-group-muted"><strong>Monthly / As needed</strong>' +
+        renderIngredientList(CHORES_OCCASIONAL.map((t) => [t]), true) + '</div>';
+    }
 
     return html;
   }
 
+  function buildPrepDetailHTML() {
+    const tasks = [
+      "Put devices on charge",
+      "Prepare tomorrow's clothes",
+      "Set aside water to drink",
+      "Close out the day",
+      "Brush teeth"
+    ];
+    return '<div class="detail-note">Wrap-up checklist</div>' +
+      renderIngredientList(tasks.map((t) => [t]), true);
+  }
+
   function attachDetail(row, item, index) {
-    if (!item.mealId && !item.house) return;
+    if (!item.mealId && !item.house && !item.prep) return;
 
     row.classList.add("expandable");
 
     const detail = document.createElement("div");
     detail.className = "row-detail";
     detail.id = "detail-" + index;
-    detail.innerHTML = item.mealId ? buildMealDetailHTML(item.mealId) : buildChoresDetailHTML();
+    detail.innerHTML = item.mealId ? buildMealDetailHTML(item.mealId) : item.house ? buildChoresDetailHTML() : buildPrepDetailHTML();
     detail.addEventListener("click", (e) => e.stopPropagation());
     row.appendChild(detail);
 
