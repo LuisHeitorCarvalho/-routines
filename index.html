@@ -917,7 +917,7 @@
     <div class="day-progress-foot mono">
       <span>04:30</span>
       <span id="dayStatus">Not started yet</span>
-      <span>20:45</span>
+      <span>20:30</span>
     </div>
   </section>
 
@@ -946,7 +946,7 @@
       <button class="period-head" type="button" aria-expanded="true" aria-controls="noiteRows">
         <span class="period-badge">N</span>
         <span class="period-title">Evening</span>
-        <span class="period-range mono">18:05 – 20:45+</span>
+        <span class="period-range mono">18:05 – 20:30+</span>
         <span class="period-chevron" aria-hidden="true"><svg viewBox="0 0 12 12" focusable="false"><path d="M3 4.5L6 7.5L9 4.5"></path></svg></span>
       </button>
       <div class="rows" id="noiteRows"></div>
@@ -956,25 +956,25 @@
 </div>
 
 <script>
+  const CLOSING_CHECKLIST = ["Put devices on charge", "Prepare tomorrow's clothes", "Set aside water to drink", "Close out the day", "Brush teeth"];
+
   const fullRoutine = [
-    { start: "04:30", end: "04:50", title: "Wake up, brush teeth and tidy the room", period: "Morning" },
+    { start: "04:30", end: "05:00", title: "Wake up · bathroom · bed · training clothes", period: "Morning" },
     { start: "05:00", end: "06:00", title: "Workout", period: "Morning", hideOn: [0, 3] },
     { start: "06:00", end: "06:30", title: "Shower and breakfast", period: "Morning", mealId: 1 },
-    { start: "06:30", end: "07:20", title: "Deep study", period: "Morning" },
+    { start: "06:30", end: "07:20", title: "Morning block", period: "Morning", note: "Fixed use: English." },
     { start: "07:30", end: "12:15", title: "School", period: "Morning", hideOn: [0, 6] },
     { start: "10:00", end: "10:15", title: "Morning snack", period: "Morning", mealId: 2, weekendOnly: true },
     { start: "12:15", end: "12:45", title: "Lunch", period: "Afternoon", mealId: 3 },
     { start: "12:45", end: "13:00", title: "Rest", period: "Afternoon", phone: true },
     { start: "13:00", end: "13:25", title: "House chores", period: "Afternoon", house: true },
-    { start: "13:30", end: "18:00", title: "Work", period: "Afternoon", hideOn: [0, 6] },
+    { start: "13:30", end: "18:00", title: "Work", period: "Afternoon", hideOn: [0, 6], note: "Smart Scale — prospecting, calls, delivery and CRM." },
     { start: "15:45", end: "16:00", title: "Afternoon snack", period: "Afternoon", mealId: 4, weekendOnly: true },
-    { start: "18:05", end: "18:20", title: "Phone", period: "Evening", phone: true },
-    { start: "18:20", end: "18:30", title: "Meal", period: "Evening", mealId: 5 },
-    { start: "18:30", end: "19:45", title: "Main study", period: "Evening" },
-    { start: "19:45", end: "19:50", title: "Prepare for tomorrow", period: "Evening", prep: true },
-    { start: "19:50", end: "20:00", title: "Daily review", period: "Evening" },
-    { start: "20:00", end: "20:45", title: "Reading", period: "Evening" },
-    { start: "20:45", end: "24:00", title: "Sleep", period: "Evening", sleep: true }
+    { start: "18:05", end: "18:20", title: "Dinner and kitchen", period: "Evening", mealId: 5 },
+    { start: "18:25", end: "19:45", title: "Deep block", period: "Evening", note: "Active front of the Board." },
+    { start: "19:45", end: "19:55", title: "Closing", period: "Evening", note: "Daily review.", checklist: CLOSING_CHECKLIST },
+    { start: "19:55", end: "20:25", title: "Free", period: "Evening", note: "Minimal writing · night hygiene · lights out." },
+    { start: "20:30", end: "24:00", title: "Sleep", period: "Evening", sleep: true }
   ];
 
   // Muscle-gain meal plan (base: Meal_Plan.html)
@@ -1004,7 +1004,7 @@
       items: [["Plain unsweetened yogurt", "250 g"], ["Banana", "1 unit"], ["Whole oats", "50 g"], ["Chia or flaxseed", "10 g"], ["Roasted unsalted peanuts", "15 g"], ["Water", "300 ml"]]
     },
     5: {
-      time: "18:30", title: "Dinner",
+      time: "18:05", title: "Dinner",
       subtitle: "Choose one option.",
       options: {
         A: {
@@ -1064,7 +1064,7 @@
   const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
   const routineStartMin = timeToMinutes("04:30");
-  const routineEndMin = timeToMinutes("20:45");
+  const routineEndMin = timeToMinutes("20:30");
 
   let hasAutoScrolled = false;
 
@@ -1090,7 +1090,7 @@
   }
 
   function formatRange(item) {
-    if (item.sleep) return "20:45+";
+    if (item.sleep) return "20:30+";
     return item.start + " – " + item.end;
   }
 
@@ -1141,37 +1141,32 @@
     html += '<div class="detail-group"><strong>' + escapeHTML(weekly.name) + ' — ' + escapeHTML(weekly.title) + '</strong>' +
       renderIngredientList(weekly.tasks.map((t) => [t]), true) + '</div>';
 
-    // Monthly / As-needed chores only need to surface once a month, not on every
-    // daily open of this detail — shown on the 1st, otherwise skipped.
-    if (new Date().getDate() === 1) {
-      html += '<div class="detail-group detail-group-muted"><strong>Monthly / As needed</strong>' +
-        renderIngredientList(CHORES_OCCASIONAL.map((t) => [t]), true) + '</div>';
-    }
+    html += '<div class="detail-group detail-group-muted"><strong>Monthly / As needed</strong>' +
+      renderIngredientList(CHORES_OCCASIONAL.map((t) => [t]), true) + '</div>';
 
     return html;
   }
 
-  function buildPrepDetailHTML() {
-    const tasks = [
-      "Put devices on charge",
-      "Prepare tomorrow's clothes",
-      "Set aside water to drink",
-      "Close out the day",
-      "Brush teeth"
-    ];
-    return '<div class="detail-note">Wrap-up checklist</div>' +
-      renderIngredientList(tasks.map((t) => [t]), true);
+  function buildNoteDetailHTML(item) {
+    let html = item.note ? '<p class="detail-prep">' + escapeHTML(item.note) + '</p>' : '';
+    if (item.checklist) {
+      html += '<div class="detail-group"><strong>Wrap-up checklist</strong>' +
+        renderIngredientList(item.checklist.map((t) => [t]), true) + '</div>';
+    }
+    return html;
   }
 
   function attachDetail(row, item, index) {
-    if (!item.mealId && !item.house && !item.prep) return;
+    if (!item.mealId && !item.house && !item.note && !item.checklist) return;
 
     row.classList.add("expandable");
 
     const detail = document.createElement("div");
     detail.className = "row-detail";
     detail.id = "detail-" + index;
-    detail.innerHTML = item.mealId ? buildMealDetailHTML(item.mealId) : item.house ? buildChoresDetailHTML() : buildPrepDetailHTML();
+    detail.innerHTML = item.mealId ? buildMealDetailHTML(item.mealId)
+      : item.house ? buildChoresDetailHTML()
+      : buildNoteDetailHTML(item);
     detail.addEventListener("click", (e) => e.stopPropagation());
     row.appendChild(detail);
 
@@ -1303,7 +1298,7 @@
       heroNow.classList.add("mode-sleep");
       stateLabel.textContent = "Sleep";
       currentTitle.textContent = "Time to sleep";
-      currentTime.textContent = "From 20:45";
+      currentTime.textContent = "From 20:30";
       remainingTime.textContent = "Routine complete";
       blockRow.style.display = "none";
       nextTitle.textContent = routine[0].title;
